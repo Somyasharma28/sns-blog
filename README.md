@@ -1,2 +1,2 @@
-# sns-blog
-Repository for sns-blog
+# sns-blog-basic-template
+Repository for sns-blog basic template files

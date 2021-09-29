@@ -1,0 +1,14 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for sns-demo
+
+Resources:
+
+  SendMailFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: SendMailFunction/
+      Handler: app.lambdaHandler
+      Runtime: nodejs14.x
+
+
