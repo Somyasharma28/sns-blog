@@ -1,9 +1,0 @@
-{
-  "name": "sendmailfunction",
-  "version": "1.0.0",
-  "description": "SendMail Lambda function",
-  "main": "app.js",
-  "repository": "https://github.com/Somyasharma28/sns-blog.git",
-  "author": "SAM CLI",
-  "license": "MIT"
-}
