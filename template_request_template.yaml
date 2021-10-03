@@ -1,0 +1,113 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Sample SAM Template for sns-blog
+
+Resources:
+
+  MySNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: 'example@gmail.com' #Add the user email
+          Protocol: "email"
+      TopicName: "SampleTopic"
+
+  MyRestApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: MyRestAPI
+
+  MyResource:
+    Type: 'AWS::ApiGateway::Resource'
+    Properties:
+      RestApiId: !Ref MyRestApi
+      ParentId: !GetAtt 
+        - MyRestApi
+        - RootResourceId
+      PathPart: sendMail
+
+  MyRequestValidator:
+    Type: AWS::ApiGateway::RequestValidator
+    Properties: 
+      Name: MyRequestValidator
+      RestApiId:  !Ref MyRestApi
+      ValidateRequestBody: true
+      ValidateRequestParameters: false
+
+  MyModel:
+    Type: 'AWS::ApiGateway::Model'
+    Properties:
+      RestApiId: !Ref MyRestApi
+      ContentType: application/json
+      Schema:
+        $schema: 'http://json-schema.org/draft-04/schema#'
+        title: MyModel
+        type: object
+        properties:
+          message:
+            type: string
+
+  MyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      HttpMethod: POST
+      ResourceId: !Ref MyResource
+      RestApiId: !Ref MyRestApi
+      AuthorizationType: NONE
+      RequestValidatorId: !Ref MyRequestValidator
+      RequestModels:
+        'application/json': !Ref MyModel
+      Integration:
+        Type: AWS
+        IntegrationHttpMethod: POST
+        PassthroughBehavior: never
+        Credentials: !Sub '${MyRole.Arn}' 
+        Uri: !Sub  'arn:aws:apigateway:ap-south-1:sns:path//'
+        RequestParameters:
+          integration.request.header.Content-Type : "'application/x-www-form-urlencoded'"
+        RequestTemplates:
+          application/json: 
+            Fn::Sub :
+              - |-
+                #set($topic="arn:aws:sns:ap-south-1:873102235883:SampleTopic")
+                #set($msg=$input.path('$.message'))
+                Action=Publish&TopicArn=$util.urlEncode($topic)&Message=$util.urlEncode($msg)
+              - topicArn:
+                  Fn::Sub: ${MySNSTopic}
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+  
+  MyDeployment:
+    DependsOn: MyMethod
+    Type: 'AWS::ApiGateway::Deployment'
+    Properties:
+      RestApiId: !Ref MyRestApi
+      Description: My testdeployment
+      StageName: Test
+
+  MyRole: 
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: 'sns:Publish'
+                Resource: !Ref MySNSTopic
+      
+
+
