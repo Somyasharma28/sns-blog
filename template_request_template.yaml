@@ -69,7 +69,7 @@ Resources:
           application/json: 
             Fn::Sub :
               - |-
-                #set($topic="arn:aws:sns:ap-south-1:873102235883:SampleTopic")
+                #set($topic="arn:aws:sns:ap-south-1:222222222222:SampleTopic") #Add the topic arn
                 #set($msg=$input.path('$.message'))
                 Action=Publish&TopicArn=$util.urlEncode($topic)&Message=$util.urlEncode($msg)
               - topicArn:
